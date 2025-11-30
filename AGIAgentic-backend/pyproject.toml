@@ -8,4 +8,7 @@ dependencies = [
   "fastapi[standard]>=0.122.0",
   "langchain>=1.1.0",
   "langchain-mcp-adapters>=0.1.14",
+  "loguru>=0.7.3",
+  "openai>=2.8.1",
+  "socksio>=1.0.0"
 ]

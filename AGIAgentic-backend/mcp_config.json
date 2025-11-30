@@ -1,0 +1,8 @@
+{
+  "mcp_services": {
+    "bing-cn-mcp-server": {
+      "transport": "streamable_http",
+      "url": "https://mcp.api-inference.modelscope.net/2bc97cb25c334f/mcp"
+    }
+  }
+}

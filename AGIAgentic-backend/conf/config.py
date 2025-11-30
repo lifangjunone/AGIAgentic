@@ -3,7 +3,7 @@ import os
 from typing import Optional, Type, TypeVar
 from pydantic_settings import BaseSettings
 
-from .setting import MCPSettings, AgentSettings, ToolsSettings
+from .setting import MCPSettings, AgentSettings, ToolsSettings, ServerSettings
 
 
 T = TypeVar("T", bound=BaseSettings)
@@ -13,6 +13,7 @@ class ConfigManager:
 
     def __init__(self, env_file: Optional[str] = None):
         self._env_file = env_file or os.getenv("ENV_FILE_PATH", ".env")  # 默认 .env 文件路径
+        self._server_config: Optional[ServerSettings] = None
         self._mcp_config: Optional[MCPSettings] = None
         self._agent_config: Optional[AgentSettings] = None
         self._tools_config: Optional[ToolsSettings] = None
@@ -25,6 +26,12 @@ class ConfigManager:
             BaseSettings: 加载后的配置实例
         """
         return config_class(_env_file=self._env_file)  # 通过传递 env_file 加载配置
+    
+    @property
+    def server_config(self) -> ServerSettings:
+        if self._server_config is None:
+            self._server_config = self._load_config(ServerSettings)
+        return self._server_config
 
     @property
     def mcp_config(self) -> MCPSettings:

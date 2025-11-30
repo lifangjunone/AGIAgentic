@@ -1,14 +1,15 @@
 
 
 import asyncio
-import logging
+import traceback
 
 from typing import Dict, Union, List
 from langchain_core.tools import BaseTool
 from langchain_mcp_adapters.sessions import Connection # type: ignore
 from langchain_mcp_adapters.client import MultiServerMCPClient # type: ignore
 
-from ..conf.config import config_manager
+from conf.config import config_manager
+from common.logger import logger
 
 
 class MCPClientManager:
@@ -33,8 +34,11 @@ class MCPClientManager:
         bool: True if the configuration is valid, False otherwise.
     """
     try:
+      logger.debug(f"Validating MCP configuration: {config}")
       # Get transport type, default to 'stdio' if not specified
-      transport = config.get("transport", "stdio")
+      transport = config.get("transport")
+      if not transport:
+        return False
       if transport not in ["websocket", "streamable_http", "http"]:
         return False
       if transport == "stdio":
@@ -46,7 +50,7 @@ class MCPClientManager:
         if "url" not in config:
           return False
     except Exception as e:
-      logging.error("Configuration validation error: %s", str(e))
+      logger.error(f"Configuration validation error: {str(e)}")
       return False
     # If all checks pass, the configuration is valid
     return True
@@ -60,29 +64,33 @@ class MCPClientManager:
       return self._client
     async with self._client_lock:
       if not self.mcp_configs:
-        logging.error("No MCP configurations provided.")
+        logger.error("No MCP configurations provided.")
         return None
       try:
-        logging.info("Creating MCP client for services: %s", list(self.mcp_configs.keys()))
+        logger.debug(f"mcp_configs: {self.mcp_configs}") 
+        logger.info(f"Creating MCP client for services: {list(self.mcp_configs.keys())}")
         # filter out invalid configurations
         filtered_configs: Dict[str, Connection] = {}
         for service_name, config in self.mcp_configs.items():
+          logger.debug(f"Validating MCP configuration for service {service_name}: {config}")
           try:
             # Validate configuration 
-            if await self._validate_config(config):
+            is_valid = await self._validate_config(config)
+            logger.debug(f"Validation result for service {service_name}: {is_valid}")
+            if is_valid:
               filtered_configs[service_name] = config
           except Exception as e:
-            logging.warning("Invalid MCP configuration for service '%s': %s", service_name, str(e))
+            logger.warning(f"Invalid MCP configuration for service {service_name}: {str(e)}")
             continue
         # Check if any valid configurations remain
         if not filtered_configs:
-          logging.error("No valid MCP configurations available after filtering.")
+          logger.error("No valid MCP configurations available after filtering.")
           return None
         # Initialize the MCP client with the filtered configurations
         self._client = MultiServerMCPClient(filtered_configs)
         return self._client
       except Exception as e:
-        logging.error("Error creating MCP client: %s", str(e))
+        logger.error(f"Error creating MCP client: {str(e)}")
         return None
       
   async def close_client(self) -> None:
@@ -92,9 +100,9 @@ class MCPClientManager:
       async with self._client_lock:
         try:
           # langchain_mcp_adapters does not have a close method yet
-          logging.info("Closing MCP client.")
+          logger.info("Closing MCP client.")
         except Exception as e:
-          logging.error("Error closing MCP client: %s", str(e))
+          logger.error(f"Error closing MCP client: {str(e)}")
         finally:
           self._client = None
 
@@ -105,20 +113,35 @@ class MCPClientManager:
     """
     client = await self.get_or_create_client()
     if client is None:
-      logging.error("MCP client is not available.")
+      logger.error("MCP client is not available.")
       return []
     try:
       # Set a timeout for getting tools
       all_tools = await asyncio.wait_for(client.get_tools(), timeout=config_manager.mcp_config.MCP_GET_ALL_TOOLS_TIMEOUT)
       if not all_tools:
-        logging.warning("No tools retrieved from MCP services.")
+        logger.warning("No tools retrieved from MCP services.")
         return []
       else:
-        logging.info("Retrieved %d tools from MCP services.", len(all_tools))
+        logger.info(f"Retrieved {len(all_tools)} tools from MCP services.")
+        logger.debug(f"Tools: {all_tools}")
         return all_tools
     except asyncio.TimeoutError:
-      logging.error("Timeout while retrieving tools from MCP Services.")
+      logger.error("Timeout while retrieving tools from MCP Services.")
       return []
     except Exception as e:
-      logging.error("Error retrieving tools from MCP Services: %s", str(e))
+      traceback.print_exc()
+      logger.error(f"Error retrieving tools from MCP Services: {str(e)}")
       return []
+
+  def get_mcp_tools(self) -> List[BaseTool]:
+    """ Get all available tools from the MCP services (synchronous wrapper)
+    Returns:
+        List: A list of tools available from all configured MCP services.
+    """
+    new_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(new_loop)
+    try:
+      tools = new_loop.run_until_complete(self.get_all_tools())
+      return tools
+    finally:
+      new_loop.close()

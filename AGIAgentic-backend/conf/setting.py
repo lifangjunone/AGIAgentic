@@ -26,3 +26,13 @@ class ToolsSettings(BaseSettings):
     class Config:
         env_prefix = "TOOLS_"
         case_sensitive = True
+
+
+class ServerSettings(BaseSettings):
+    """ Server configuration settings """
+    SERVER_DEBUG: bool = Field(False, description="Enable debug mode")
+    SERVER_NAME: str = Field("AGIAgentic", description="Name of the server")
+
+    class Config:
+        env_prefix = "SERVER_"
+        case_sensitive = True

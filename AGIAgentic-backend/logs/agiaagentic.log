@@ -1,0 +1,244 @@
+2025-11-30 23:42:10 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:42:10 | INFO | Fetching tools from MCP services...
+2025-11-30 23:42:10 | INFO | --------------------------------------------------
+2025-11-30 23:42:10 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:42:10 | INFO | Tools:
+2025-11-30 23:42:10 | INFO | --------------------------------------------------
+2025-11-30 23:42:16 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:42:16 | INFO | Fetching tools from MCP services...
+2025-11-30 23:42:16 | INFO | --------------------------------------------------
+2025-11-30 23:42:16 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:42:16 | INFO | Tools:
+2025-11-30 23:42:16 | INFO | --------------------------------------------------
+2025-11-30 23:44:20 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:44:20 | INFO | Fetching tools from MCP services...
+2025-11-30 23:44:20 | INFO | --------------------------------------------------
+2025-11-30 23:44:20 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:44:20 | INFO | Tools:
+2025-11-30 23:44:20 | INFO | --------------------------------------------------
+2025-11-30 23:44:25 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:44:25 | INFO | Fetching tools from MCP services...
+2025-11-30 23:44:25 | INFO | --------------------------------------------------
+2025-11-30 23:44:25 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:44:25 | INFO | Tools:
+2025-11-30 23:44:25 | INFO | --------------------------------------------------
+2025-11-30 23:46:24 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:46:24 | INFO | Creating MCP client for services: %s
+2025-11-30 23:46:24 | ERROR | No valid MCP configurations available after filtering.
+2025-11-30 23:46:24 | ERROR | MCP client is not available.
+2025-11-30 23:46:24 | INFO | Fetching tools from MCP services...
+2025-11-30 23:46:24 | INFO | --------------------------------------------------
+2025-11-30 23:46:24 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:46:24 | INFO | Tools:
+2025-11-30 23:46:24 | INFO | --------------------------------------------------
+2025-11-30 23:47:27 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:47:27 | INFO | Creating MCP client for services: %s
+2025-11-30 23:47:27 | ERROR | No valid MCP configurations available after filtering.
+2025-11-30 23:47:27 | ERROR | MCP client is not available.
+2025-11-30 23:47:27 | INFO | Fetching tools from MCP services...
+2025-11-30 23:47:27 | INFO | --------------------------------------------------
+2025-11-30 23:47:27 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:47:27 | INFO | Tools:
+2025-11-30 23:47:27 | INFO | --------------------------------------------------
+2025-11-30 23:48:11 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:48:11 | INFO | Creating MCP client for services: ['mcpServers']
+2025-11-30 23:48:11 | ERROR | No valid MCP configurations available after filtering.
+2025-11-30 23:48:11 | ERROR | MCP client is not available.
+2025-11-30 23:48:11 | INFO | Fetching tools from MCP services...
+2025-11-30 23:48:11 | INFO | --------------------------------------------------
+2025-11-30 23:48:11 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:48:11 | INFO | Tools:
+2025-11-30 23:48:11 | INFO | --------------------------------------------------
+2025-11-30 23:49:18 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:49:18 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-11-30 23:49:18 | ERROR | No valid MCP configurations available after filtering.
+2025-11-30 23:49:18 | ERROR | MCP client is not available.
+2025-11-30 23:49:18 | INFO | Fetching tools from MCP services...
+2025-11-30 23:49:18 | INFO | --------------------------------------------------
+2025-11-30 23:49:18 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:49:18 | INFO | Tools:
+2025-11-30 23:49:18 | INFO | --------------------------------------------------
+2025-11-30 23:50:55 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:50:55 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-11-30 23:50:55 | ERROR | No valid MCP configurations available after filtering.
+2025-11-30 23:50:55 | ERROR | MCP client is not available.
+2025-11-30 23:50:55 | INFO | Fetching tools from MCP services...
+2025-11-30 23:50:55 | INFO | --------------------------------------------------
+2025-11-30 23:50:55 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:50:55 | INFO | Tools:
+2025-11-30 23:50:55 | INFO | --------------------------------------------------
+2025-11-30 23:51:28 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:51:28 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-11-30 23:51:28 | ERROR | No valid MCP configurations available after filtering.
+2025-11-30 23:51:28 | ERROR | MCP client is not available.
+2025-11-30 23:51:28 | INFO | Fetching tools from MCP services...
+2025-11-30 23:51:28 | INFO | --------------------------------------------------
+2025-11-30 23:51:28 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:51:28 | INFO | Tools:
+2025-11-30 23:51:28 | INFO | --------------------------------------------------
+2025-11-30 23:53:12 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:53:12 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-11-30 23:53:12 | ERROR | No valid MCP configurations available after filtering.
+2025-11-30 23:53:12 | ERROR | MCP client is not available.
+2025-11-30 23:53:12 | INFO | Fetching tools from MCP services...
+2025-11-30 23:53:12 | INFO | --------------------------------------------------
+2025-11-30 23:53:12 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:53:12 | INFO | Tools:
+2025-11-30 23:53:12 | INFO | --------------------------------------------------
+2025-11-30 23:53:41 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:53:41 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-11-30 23:53:41 | ERROR | No valid MCP configurations available after filtering.
+2025-11-30 23:53:41 | ERROR | MCP client is not available.
+2025-11-30 23:53:41 | INFO | Fetching tools from MCP services...
+2025-11-30 23:53:41 | INFO | --------------------------------------------------
+2025-11-30 23:53:41 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:53:41 | INFO | Tools:
+2025-11-30 23:53:41 | INFO | --------------------------------------------------
+2025-11-30 23:54:39 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:54:39 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-11-30 23:54:39 | ERROR | No valid MCP configurations available after filtering.
+2025-11-30 23:54:39 | ERROR | MCP client is not available.
+2025-11-30 23:54:39 | INFO | Fetching tools from MCP services...
+2025-11-30 23:54:39 | INFO | --------------------------------------------------
+2025-11-30 23:54:39 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:54:39 | INFO | Tools:
+2025-11-30 23:54:39 | INFO | --------------------------------------------------
+2025-11-30 23:55:37 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:55:37 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-11-30 23:55:37 | INFO | Fetching tools from MCP services...
+2025-11-30 23:55:37 | INFO | --------------------------------------------------
+2025-11-30 23:55:37 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:55:37 | INFO | Tools:
+2025-11-30 23:55:37 | INFO | --------------------------------------------------
+2025-11-30 23:56:38 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:56:38 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-11-30 23:56:38 | INFO | Fetching tools from MCP services...
+2025-11-30 23:56:38 | INFO | --------------------------------------------------
+2025-11-30 23:56:38 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:56:38 | INFO | Tools:
+2025-11-30 23:56:38 | INFO | --------------------------------------------------
+2025-11-30 23:58:15 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:58:15 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-11-30 23:58:15 | ERROR | Error initializing MCP Manager or retrieving tools: name 'logging' is not defined
+2025-11-30 23:58:15 | INFO | Fetching tools from MCP services...
+2025-11-30 23:58:15 | INFO | --------------------------------------------------
+2025-11-30 23:58:15 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:58:15 | INFO | Tools:
+2025-11-30 23:58:15 | INFO | --------------------------------------------------
+2025-11-30 23:58:46 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:58:46 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-11-30 23:58:46 | ERROR | Error initializing MCP Manager or retrieving tools: name 'logging' is not defined
+2025-11-30 23:58:46 | INFO | Fetching tools from MCP services...
+2025-11-30 23:58:46 | INFO | --------------------------------------------------
+2025-11-30 23:58:46 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:58:46 | INFO | Tools:
+2025-11-30 23:58:46 | INFO | --------------------------------------------------
+2025-11-30 23:59:26 | INFO | MCP configuration loaded successfully from %s
+2025-11-30 23:59:26 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-11-30 23:59:26 | ERROR | Error retrieving tools from MCP Services: %s
+2025-11-30 23:59:26 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:59:26 | INFO | Fetching tools from MCP services...
+2025-11-30 23:59:26 | INFO | --------------------------------------------------
+2025-11-30 23:59:26 | INFO | Retrieved 0 tools from MCP services.
+2025-11-30 23:59:26 | INFO | Tools:
+2025-11-30 23:59:26 | INFO | --------------------------------------------------
+2025-12-01 00:00:36 | INFO | MCP configuration loaded successfully from %s
+2025-12-01 00:00:36 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-12-01 00:00:36 | ERROR | Error retrieving tools from MCP Services: Configuration error: Missing 'transport' key in server configuration. Each server must include 'transport' with one of: 'stdio', 'sse', 'websocket', 'streamable_http'. Please refer to the langchain-mcp-adapters documentation for more details.
+2025-12-01 00:00:36 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:00:36 | INFO | Fetching tools from MCP services...
+2025-12-01 00:00:36 | INFO | --------------------------------------------------
+2025-12-01 00:00:36 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:00:36 | INFO | Tools:
+2025-12-01 00:00:36 | INFO | --------------------------------------------------
+2025-12-01 00:00:43 | INFO | MCP configuration loaded successfully from %s
+2025-12-01 00:00:43 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-12-01 00:00:43 | ERROR | Error retrieving tools from MCP Services: Configuration error: Missing 'transport' key in server configuration. Each server must include 'transport' with one of: 'stdio', 'sse', 'websocket', 'streamable_http'. Please refer to the langchain-mcp-adapters documentation for more details.
+2025-12-01 00:00:43 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:00:43 | INFO | Fetching tools from MCP services...
+2025-12-01 00:00:43 | INFO | --------------------------------------------------
+2025-12-01 00:00:43 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:00:43 | INFO | Tools:
+2025-12-01 00:00:43 | INFO | --------------------------------------------------
+2025-12-01 00:02:41 | INFO | MCP configuration loaded successfully from %s
+2025-12-01 00:02:41 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-12-01 00:02:41 | ERROR | Error retrieving tools from MCP Services: unhandled errors in a TaskGroup (1 sub-exception)
+2025-12-01 00:02:41 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:02:41 | INFO | Fetching tools from MCP services...
+2025-12-01 00:02:41 | INFO | --------------------------------------------------
+2025-12-01 00:02:41 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:02:41 | INFO | Tools:
+2025-12-01 00:02:41 | INFO | --------------------------------------------------
+2025-12-01 00:06:16 | INFO | MCP configuration loaded successfully from %s
+2025-12-01 00:06:16 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-12-01 00:06:17 | ERROR | Error retrieving tools from MCP Services: unhandled errors in a TaskGroup (1 sub-exception)
+2025-12-01 00:06:17 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:06:17 | INFO | Fetching tools from MCP services...
+2025-12-01 00:06:17 | INFO | --------------------------------------------------
+2025-12-01 00:06:17 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:06:17 | INFO | Tools:
+2025-12-01 00:06:17 | INFO | --------------------------------------------------
+2025-12-01 00:09:06 | INFO | MCP configuration loaded successfully from %s
+2025-12-01 00:09:06 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-12-01 00:09:07 | ERROR | Error retrieving tools from MCP Services: unhandled errors in a TaskGroup (1 sub-exception)
+2025-12-01 00:09:07 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:09:07 | INFO | Fetching tools from MCP services...
+2025-12-01 00:09:07 | INFO | --------------------------------------------------
+2025-12-01 00:09:07 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:09:07 | INFO | Tools:
+2025-12-01 00:09:07 | INFO | --------------------------------------------------
+2025-12-01 00:10:39 | INFO | MCP configuration loaded successfully from %s
+2025-12-01 00:10:39 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-12-01 00:10:40 | ERROR | Error retrieving tools from MCP Services: unhandled errors in a TaskGroup (1 sub-exception)
+2025-12-01 00:10:40 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:10:40 | INFO | Fetching tools from MCP services...
+2025-12-01 00:10:40 | INFO | --------------------------------------------------
+2025-12-01 00:10:40 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:10:40 | INFO | Tools:
+2025-12-01 00:10:40 | INFO | --------------------------------------------------
+2025-12-01 00:11:40 | INFO | MCP configuration loaded successfully from %s
+2025-12-01 00:11:40 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-12-01 00:11:41 | ERROR | Error retrieving tools from MCP Services: unhandled errors in a TaskGroup (1 sub-exception)
+2025-12-01 00:11:41 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:11:41 | INFO | Fetching tools from MCP services...
+2025-12-01 00:11:41 | INFO | --------------------------------------------------
+2025-12-01 00:11:41 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:11:41 | INFO | Tools:
+2025-12-01 00:11:41 | INFO | --------------------------------------------------
+2025-12-01 00:13:02 | INFO | MCP configuration loaded successfully from %s
+2025-12-01 00:13:02 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-12-01 00:13:02 | ERROR | No valid MCP configurations available after filtering.
+2025-12-01 00:13:02 | ERROR | MCP client is not available.
+2025-12-01 00:13:02 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:13:02 | INFO | Fetching tools from MCP services...
+2025-12-01 00:13:02 | INFO | --------------------------------------------------
+2025-12-01 00:13:02 | INFO | Retrieved 0 tools from MCP services.
+2025-12-01 00:13:02 | INFO | Tools:
+2025-12-01 00:13:02 | INFO | --------------------------------------------------
+2025-12-01 00:13:16 | INFO | MCP configuration loaded successfully from %s
+2025-12-01 00:13:16 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-12-01 00:13:20 | INFO | Retrieved %d tools from MCP services.
+2025-12-01 00:13:20 | INFO | Retrieved 2 tools from MCP services.
+2025-12-01 00:13:20 | INFO | Fetching tools from MCP services...
+2025-12-01 00:13:20 | INFO | --------------------------------------------------
+2025-12-01 00:13:20 | INFO | Retrieved 2 tools from MCP services.
+2025-12-01 00:13:20 | INFO | Tools:
+2025-12-01 00:13:20 | INFO | --------------------------------------------------
+2025-12-01 00:14:08 | INFO | MCP configuration loaded successfully from %s
+2025-12-01 00:14:08 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-12-01 00:14:09 | INFO | Retrieved 2 tools from MCP services.
+2025-12-01 00:14:09 | INFO | Retrieved 2 tools from MCP services.
+2025-12-01 00:14:09 | INFO | Fetching tools from MCP services...
+2025-12-01 00:14:09 | INFO | --------------------------------------------------
+2025-12-01 00:14:09 | INFO | Retrieved 2 tools from MCP services.
+2025-12-01 00:14:09 | INFO | Tools:
+2025-12-01 00:14:09 | INFO | --------------------------------------------------
+2025-12-01 00:15:44 | INFO | MCP configuration loaded successfully from %s
+2025-12-01 00:15:44 | INFO | Creating MCP client for services: ['bing-cn-mcp-server']
+2025-12-01 00:15:45 | INFO | Retrieved 2 tools from MCP services.
+2025-12-01 00:15:45 | INFO | Retrieved 2 tools from MCP services.
+2025-12-01 00:15:45 | INFO | Fetching tools from MCP services...
+2025-12-01 00:15:45 | INFO | --------------------------------------------------
+2025-12-01 00:15:45 | INFO | Retrieved 2 tools from MCP services.
+2025-12-01 00:15:45 | INFO | Tools:
+2025-12-01 00:15:45 | INFO | --------------------------------------------------
