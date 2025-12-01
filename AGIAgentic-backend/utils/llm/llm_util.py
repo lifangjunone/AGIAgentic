@@ -1,5 +1,10 @@
-from typing import Any, Dict
+
+import json
 import inspect
+
+
+from typing import Any, Dict
+
 
 
 def serialize_provider(provider: Any) -> Dict[str, Any]:
@@ -25,3 +30,60 @@ def serialize_provider(provider: Any) -> Dict[str, Any]:
     except Exception as e:
         # return minimal serializable info on error
         return {"type": "unknown", "repr": repr(provider), "error": str(e)}
+    
+def serializable_llm_result(obj: Any) -> Any:
+      """Recursively convert various LLM response objects to JSON-serializable structures."""
+      # primitives
+      if obj is None or isinstance(obj, (str, int, float, bool)):
+          return obj
+      # dict / list / tuple
+      if isinstance(obj, dict):
+          return {k: serializable_llm_result(v) for k, v in obj.items()} # type: ignore
+      if isinstance(obj, (list, tuple, set)):
+          return [serializable_llm_result(v) for v in obj] # type: ignore
+  
+      # common attributes returned by langchain/langchain_core LLM outputs
+      for attr in ("content", "text", "message", "data", "value"):
+          if hasattr(obj, attr):
+              try:
+                  return serializable_llm_result(getattr(obj, attr))
+              except Exception:
+                  pass
+  
+      # generations / generation lists
+      if hasattr(obj, "generations"):
+          try:
+              gens = getattr(obj, "generations")
+              return serializable_llm_result(gens)
+          except Exception:
+              pass
+      if hasattr(obj, "generation"):
+          try:
+              return serializable_llm_result(getattr(obj, "generation"))
+          except Exception:
+              pass
+  
+      # pydantic models
+      if hasattr(obj, "model_dump"):
+          try:
+              return serializable_llm_result(obj.model_dump())
+          except Exception:
+              pass
+      if hasattr(obj, "dict"):
+          try:
+              return serializable_llm_result(obj.dict())
+          except Exception:
+              pass
+      if hasattr(obj, "to_dict"):
+          try:
+              return serializable_llm_result(obj.to_dict())
+          except Exception:
+              pass
+  
+      # try JSON round-trip
+      try:
+          json.dumps(obj)
+          return obj
+      except Exception:
+          return repr(obj)
+  

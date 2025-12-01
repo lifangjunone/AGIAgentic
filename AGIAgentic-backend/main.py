@@ -6,11 +6,11 @@ from typing import List, Any, Dict
 from contextlib import asynccontextmanager
 
 from api import router
-from conf.config import config_manager
 from tools import nitialize_tool_manager
 from llms import initialize_model_manager
 from common.logger import initialize_logger
 from _mcp.manager import initialize_mcp_manager
+from conf.config import config_manager, ConfigManager
 
 
 
@@ -51,8 +51,18 @@ def init_models(app: FastAPI) -> Dict[str, Any]:
     app.state.llm_providers = llm_providers
     return llm_providers
 
+
+def initialize_config_manager(app: FastAPI) -> ConfigManager:
+    """ Initialize the global configuration manager """
+    app.state.config_manager = config_manager
+    return config_manager
+
+
 def init(app: FastAPI = None) -> None: # type: ignore
     """ Initialize the entire application."""
+
+    # Initialize global configuration manager
+    initialize_config_manager(app)
     
     # Initialize logging
     initialize_logger()
