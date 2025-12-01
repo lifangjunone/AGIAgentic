@@ -1,9 +1,13 @@
+
 import os
 
-from typing import Optional, Type, TypeVar
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
+from typing import Optional, Type, TypeVar, Any
 
-from .setting import MCPSettings, AgentSettings, ToolsSettings, ServerSettings
+from .setting import (
+    MCPSettings, AgentSettings, ToolsSettings, ServerSettings, ModelSettings
+)
 
 
 T = TypeVar("T", bound=BaseSettings)
@@ -11,12 +15,20 @@ T = TypeVar("T", bound=BaseSettings)
 class ConfigManager:
     """ Configuration manager for all settings """
 
+    _instance: Optional["ConfigManager"] = None
+
+    def __new__(cls, *args: Any, **kwargs: Any) -> "ConfigManager":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
     def __init__(self, env_file: Optional[str] = None):
         self._env_file = env_file or os.getenv("ENV_FILE_PATH", ".env")  # 默认 .env 文件路径
         self._server_config: Optional[ServerSettings] = None
         self._mcp_config: Optional[MCPSettings] = None
         self._agent_config: Optional[AgentSettings] = None
         self._tools_config: Optional[ToolsSettings] = None
+        self._model_config: Optional[ModelSettings] = None
 
     def _load_config(self, config_class: Type[T]) -> T:
         """ 动态加载配置类 
@@ -25,7 +37,7 @@ class ConfigManager:
         Returns:
             BaseSettings: 加载后的配置实例
         """
-        return config_class(_env_file=self._env_file)  # 通过传递 env_file 加载配置
+        return config_class(env_file=self._env_file)  # 通过传递 env_file 加载配置
     
     @property
     def server_config(self) -> ServerSettings:
@@ -51,8 +63,32 @@ class ConfigManager:
             self._tools_config = self._load_config(ToolsSettings)
         return self._tools_config
     
+    @property
+    def model_config(self) -> ModelSettings:
+        if self._model_config is None:
+            self._model_config = self._load_config(ModelSettings)
+        return self._model_config
+    
 
-# 初始化配置管理器时，可以传递自定义的 .env 文件路径
-run_env = os.getenv("RUN_ENV", "development")
-env_file_path = f"env/{run_env}.env"
-config_manager = ConfigManager(env_file=env_file_path)
+def initialize_config_manager(env_file: Optional[str] = None) -> ConfigManager:
+    """ Initialize the global configuration manager """
+    run_env = os.getenv("RUN_ENV", "development")
+    env_file_path = f"envs/{run_env}.env"
+    if os.path.exists(env_file_path):
+        load_dotenv(env_file_path)
+    config_manager = ConfigManager(env_file=env_file_path)
+    config_manager.server_config  # 预加载服务器配置
+    config_manager.mcp_config     # 预加载MCP配置
+    config_manager.agent_config   # 预加载Agent配置
+    config_manager.tools_config   # 预加载工具配置
+    config_manager.model_config   # 预加载模型配置
+    return config_manager
+
+
+# Global configuration manager instance
+config_manager = initialize_config_manager()
+
+
+
+
+

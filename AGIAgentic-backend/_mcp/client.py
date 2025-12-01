@@ -117,7 +117,7 @@ class MCPClientManager:
       return []
     try:
       # Set a timeout for getting tools
-      all_tools = await asyncio.wait_for(client.get_tools(), timeout=config_manager.mcp_config.MCP_GET_ALL_TOOLS_TIMEOUT)
+      all_tools = await asyncio.wait_for(client.get_tools(), timeout=config_manager.mcp_config.GET_ALL_TOOLS_TIMEOUT)
       if not all_tools:
         logger.warning("No tools retrieved from MCP services.")
         return []
