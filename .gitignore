@@ -10,3 +10,4 @@ wheels/
 .venv
 .env
 logs/*
+AGIAgentic-backend/logs/*
