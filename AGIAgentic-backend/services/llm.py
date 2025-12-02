@@ -1,7 +1,8 @@
 
 
-from typing import Optional, Type, TypeVar, cast
+from typing_extensions import Self
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from typing import Optional, Type, TypeVar, cast, Dict, Any
 
 from common.logger import logger
 from llms.providers import LLMProvider
@@ -11,16 +12,27 @@ from conf.config import config_manager
 T = TypeVar("T", bound=object)
 
 
+# Global provider storage
+
+_PROVIDERS: Dict[str, LLMProvider] = {}
+
+
 class LLMService:
     """Service class for managing LLM interactions."""
+
+    _instance = None
+
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
+        if not cls._instance:
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
     def __init__(self, llm_provider_name: str = "zhipu"):
         """ Initialize the LLM service with a specific provider.
         Args:
             llm_provider (LLMProvider): The name of the LLM provider to use.
         """
-        self.llm_provider_name = llm_provider_name  
-        self._llm_provider: Optional[LLMProvider] = None
+        self.llm_provider_name = llm_provider_name
         self._simple_llm: Optional[ChatOpenAI] = None
         self._reason_llm: Optional[ChatOpenAI] = None
         self._code_llm: Optional[ChatOpenAI] = None
@@ -28,14 +40,15 @@ class LLMService:
         self.model_config = config_manager.model_config
 
     def _ensure_provider(self) -> LLMProvider:
-        if self._llm_provider is None:
+        if _PROVIDERS.get(self.llm_provider_name) is None:
             from main import app  # delayed import to avoid circular import at module load
             providers = getattr(app.state, "llm_providers", {})
-            self._llm_provider = providers.get(self.llm_provider_name)
-            if not self._llm_provider:
+            _provider = providers.get(self.llm_provider_name)
+            if not _provider:
                 logger.error(f"LLM provider '{self.llm_provider_name}' not found.")
                 raise ValueError(f"LLM provider '{self.llm_provider_name}' not found.")
-        return self._llm_provider
+            _PROVIDERS[self.llm_provider_name] = _provider
+        return _PROVIDERS[self.llm_provider_name]
 
     def _get_and_validate(self, config_attr: str, expected_type: Type[T], model_type: str = "chat") -> T:
         """Generic helper to fetch a model name from model_config, request the provider and validate type."""
