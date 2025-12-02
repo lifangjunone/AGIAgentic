@@ -1,6 +1,6 @@
 <h1 align="center">
   <img style="vertical-align:middle" height="200"
-  src="https://raw.githubusercontent.com/lifangjunone/AGIAgentic/main/docs/_static/imgs/logo.png">
+  src="https://github.com/lifangjunone/AGIAgentic/blob/main/AGIAgentic-backend/docs/_static/imgs/logo.png">
 </h1>
 <p align="center">
   <i>AGI Agentic 🚀</i>
