@@ -3,6 +3,14 @@
     "bing-cn-mcp-server": {
       "transport": "streamable_http",
       "url": "https://mcp.api-inference.modelscope.net/2bc97cb25c334f/mcp"
+    },
+    "12306-mcp": {
+      "transport": "streamable_http",
+      "url": "https://mcp.api-inference.modelscope.net/6b5156bdf98f43/mcp"
+    },
+    "mcp_tool": {
+      "transport": "streamable_http",
+      "url": "https://mcp.api-inference.modelscope.net/175d7871435a4e/mcp"
     }
   }
 }

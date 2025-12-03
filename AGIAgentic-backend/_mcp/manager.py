@@ -35,14 +35,14 @@ class MCPConfigManager:
         dict: The MCP configuration.
     """
     if not os.path.exists(self.config_file):
-      logger.warning("MCP configuration file does not exist: %s", self.config_file)
+      logger.warning(f"MCP configuration file does not exist: {self.config_file}")
       return {}
     try:
       with open(self.config_file, 'r', encoding='utf-8') as f:
         self._mcp_config = json.load(f).get("mcp_services", {})
-      logger.info("MCP configuration loaded successfully from %s", self.config_file)
+      logger.info(f"MCP configuration loaded successfully from {self.config_file}, mcp_services: {self._mcp_config}")
     except Exception as e:
-      logger.error("Error loading MCP configuration: %s", str(e))
+      logger.error(f"Error loading MCP configuration: {str(e)}")
       self._mcp_config = {}
     logger.debug(f"Loaded MCP configuration: {self._mcp_config}")
     return self._mcp_config

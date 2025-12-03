@@ -249,6 +249,7 @@ class PlanExecutionGraph(BaseGraph):
       expected_result=step.get("expected_result", ""),
       tools="\n".join(all_tools_formatted),
     )
+    logger.debug(f"React prompt for step {current_step + 1}:\n{react_prompt_filled}")
 
     messages = {"messages": [{"role": "user", "content": react_prompt_filled}]}
     if hasattr(agent, 'ainvoke'): # type: ignore
@@ -288,6 +289,7 @@ class PlanExecutionGraph(BaseGraph):
       step_results=[],
     )
     async for event in self.graph.astream_events(init_data):  # type: ignore
+        # logger.debug(f"Graph event: {event}")
         if event["event"] == "on_chain_stream":
             chunk = event.get("data", {}).get("chunk", {})
             if isinstance(chunk, dict) and "streaming_chunks" in chunk:
@@ -308,7 +310,7 @@ class PlanExecutionGraph(BaseGraph):
                 }
                 return
         elif event["event"] == "on_chain_start":
-            # 智能体开始执行
+            # Agent start run
             yield {
                 "step": "agent_start",
                 "message": f"🚀 开始执行 {event.get('name', '智能体')}",
@@ -318,7 +320,7 @@ class PlanExecutionGraph(BaseGraph):
                 "node": event.get("name", "unknown")
             }
         elif event["event"] == "on_chain_end":
-            # 智能体执行完成
+            # Agent run end
             yield {
                 "step": "agent_complete",
                 "message": f"✅ {event.get('name', '智能体')} 执行完成",
@@ -328,7 +330,7 @@ class PlanExecutionGraph(BaseGraph):
                 "node": event.get("name", "unknown")
             }
         elif event["event"] == "on_tool_start":
-            # 工具开始执行
+            # Tool start run
             yield {
                 "step": "tool_start",
                 "message": f"🔧 使用工具: {event.get('name', 'unknown')}",
@@ -338,7 +340,7 @@ class PlanExecutionGraph(BaseGraph):
                 "node": "tool_execution"
             }
         elif event["event"] == "on_tool_end":
-            # 工具执行完成
+            # Tool run end
             yield {
                 "step": "tool_complete",
                 "message": f"✅ 工具 {event.get('name', 'unknown')} 执行完成",

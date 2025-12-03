@@ -50,7 +50,7 @@ class ModelSettings(BaseSettings):
     ZHIPU_API_KEY: str = Field("", description="API key for Zhipu models")
     ZHIPU_BASE_URL: str = Field("https://open.bigmodel.cn/api/paas/v4", description="Base URL for Zhipu API")
     SIMPLE_LLM: str = Field("glm-4-plus", description="Default simple LLM model name")
-    REASON_LLM: str = Field("glm-4-plus", description="Default reasoning-capable LLM model name")
+    REASON_LLM: str = Field("glm-4.6", description="Default reasoning-capable LLM model name")
     CODE_LLM: str = Field("glm-4-plus", description="Default code generation LLM model name")
     EMBEDDING_MODEL: str = Field("embedding-3", description="Default embedding model name")
 
