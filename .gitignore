@@ -11,3 +11,5 @@ wheels/
 .env
 logs/*
 AGIAgentic-backend/logs/*
+AGIAgentic-backend/envs/*
+
