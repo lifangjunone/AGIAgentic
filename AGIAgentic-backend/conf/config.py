@@ -72,8 +72,8 @@ class ConfigManager:
 
 def initialize_config_manager(env_file: Optional[str] = None) -> ConfigManager:
     """ Initialize the global configuration manager """
-    run_env = os.getenv("RUN_ENV", "development")
-    env_file_path = f"envs/{run_env}.env"
+    run_env = os.getenv("RUN_ENV", "")
+    env_file_path = f"{run_env}.env"
     if os.path.exists(env_file_path):
         load_dotenv(env_file_path)
     config_manager = ConfigManager(env_file=env_file_path)
