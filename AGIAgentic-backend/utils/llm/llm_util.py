@@ -38,9 +38,9 @@ def serializable_llm_result(obj: Any) -> Any:
           return obj
       # dict / list / tuple
       if isinstance(obj, dict):
-          return {k: serializable_llm_result(v) for k, v in obj.items()} # type: ignore
+          return json.dumps({k: serializable_llm_result(v) for k, v in obj.items()}, ensure_ascii=False) # type: ignore
       if isinstance(obj, (list, tuple, set)):
-          return [serializable_llm_result(v) for v in obj] # type: ignore
+          return json.dumps([serializable_llm_result(v) for v in obj], ensure_ascii=False) # type: ignore
   
       # common attributes returned by langchain/langchain_core LLM outputs
       for attr in ("content", "text", "message", "data", "value"):
@@ -82,8 +82,7 @@ def serializable_llm_result(obj: Any) -> Any:
   
       # try JSON round-trip
       try:
-          json.dumps(obj)
-          return obj
+          return json.dumps(obj)
       except Exception:
           return repr(obj)
   

@@ -1,14 +1,15 @@
 
 import time
 import asyncio
+import traceback
 
 from datetime import datetime
 
 from langgraph.graph import StateGraph # type: ignore
 from typing import Any, AsyncIterator, Dict, List
-from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import create_react_agent # type: ignore
 from langgraph.graph.state import CompiledStateGraph # type: ignore
+from langchain_core.messages import HumanMessage, AIMessage
 
 
 from common.logger import logger
@@ -73,48 +74,131 @@ class PlanExecutionGraph(BaseGraph):
         f"{operation_name}_duration": round(duration, 2),
         f"{operation_name}_timestamp": datetime.now().isoformat()
     }
+  
+  def _add_streaming_chunk(self, state: PlanExecutorState, step: str, message: str, data: Dict[str, Any] = {}) -> None: # type: ignore
+    """ add streaming chunk
+    Args:
+        state (PlanExecutorState): current state
+        step (str): step name
+        message (str): message
+        data (Dict[str, Any], optional): additional data. Defaults to {}.
+    """
+
+    if "streaming_chunks" not in state:
+        state["streaming_chunks"] = []
+
+    state["streaming_chunks"] = [{
+        "step": step,
+        "message": message,
+        "data": data or {}
+    }]
+
+    
 
   def _analyze_and_plan(self, state: PlanExecutorState) -> PlanExecutorState: # type: ignore
     """ Analyze the task and generate plan"""
 
     logger.info("Starting Analyzing task and generating execution plan...")
     start_time = time.time()
-    messages = [HumanMessage(content=planning_prompt.format(user_task=state.get("user_task", "")))]  # type: ignore
-    plan = self.reason_llm.invoke(messages)
-    json_plan = json_match(plan.content)  # type: ignore
-    logger.debug(f"Generated execution plan: {json_plan}")
+    try:
+      # Generate execution plan
+      messages = [HumanMessage(content=planning_prompt.format(user_task=state.get("user_task", "")))]  # type: ignore
+      plan = self.reason_llm.invoke(messages)
+      json_plan = json_match(plan.content)  # type: ignore
+      logger.debug(f"Generated execution plan: {json_plan}")
 
-    if not json_plan or "execution_plans" not in json_plan:
+      # Validate the generated plan
+      if not json_plan or "execution_plans" not in json_plan:
+        state["status"] = "failed"
+        state["error"] = "Failed to generate valid execution plan."
+        return state
+
+      # Update state with analysis and plan
+      state["task_analysis"] = json_plan.get("task_analysis", "")
+      state["execution_plans"] = json_plan.get("execution_plans", [])
+      state["current_step"] = 0
+      state["timing_info"] = self.statistic_timing(start_time, "analyze_and_plan")
+
+      # Add streaming chunk
+      self._add_streaming_chunk(
+        state=state,
+        step="analyze_and_plan",
+        message="✅ 任务分析和执行计划生成完成。",
+        data={
+            "task_analysis": state["task_analysis"],
+            "execution_plans": state["execution_plans"]
+        }
+      )
+    except Exception as e:
+      logger.error(f"Error in _analyze_and_plan: {e}")
       state["status"] = "failed"
-      state["error"] = "Failed to generate valid execution plan."
-      return state
-
-    state["task_analysis"] = json_plan.get("task_analysis", "")
-    state["execution_plans"] = json_plan.get("execution_plans", [])
-    state["current_step"] = 0
-    state["timing_info"] = self.statistic_timing(start_time, "analyze_and_plan")
+      state["error"] = str(e)
     return state
   
   def _check_and_execute_node(self, state: PlanExecutorState) -> PlanExecutorState: # type: ignore
     """ Check and execute task"""
+
+    # Get current step and execution plans
     current_step = state.get("current_step")
     execution_plans = state.get("execution_plans", [])
 
     logger.info(f"current_step: {current_step}, total_steps: {len(execution_plans)}")
+
+    # If all steps are completed 
     if current_step >= len(execution_plans):
       state["status"] = "completed"
       return state
     
+    # Get the current node to execute
     current_node = execution_plans[current_step]
     logger.debug(f"Executing step {current_step + 1}: {current_node}")
 
     # Execute the current step
     execution_result = self._do_execute(current_node, current_step)
+
     state["step_results"].append(execution_result)
+    # Modify state for next step
     state["current_step"] += 1
 
-    return state
+    return self._process_execution_result(state, execution_result, current_step)
   
+
+  def _process_execution_result(self, state: PlanExecutorState, execution_result: Dict[str, Any], current_step: int) -> PlanExecutorState:
+    """ process execution result
+    Args:
+        state (PlanExecutorState): current state
+        execution_result (Dict[str, Any]): execution result
+        current_step (int): current step index
+    Returns:
+        PlanExecutorState: updated state
+    """
+
+    # Add streaming chunk for execution result
+    # Failed execution
+    if execution_result.get("status") == "failed":
+      self._add_streaming_chunk(
+        state=state,
+        step=f"step_{current_step + 1}",
+        message=f"❌ 步骤 {current_step + 1} 执行失败，错误信息: {execution_result.get('execution_result')}",
+        data={
+            "execution_result": execution_result
+        }
+      )
+      state["status"] = "failed"
+      return state
+    
+    # Successful execution
+    self._add_streaming_chunk(
+      state=state,
+      step=f"step_{current_step + 1}",
+      message=f"✅ 步骤 {current_step + 1} 执行完成。",
+      data={
+          "execution_result": execution_result
+      }
+    )
+    return state
+    
+
   def _summary_response(self, state: PlanExecutorState) -> PlanExecutorState: # type: ignore
     """ summary result"""
 
@@ -123,14 +207,37 @@ class PlanExecutionGraph(BaseGraph):
     execution_plan = state.get("execution_plan")
     step_results = state.get("step_results")
 
+    # assemble execution plan text
+    plan_text = ""
+    if execution_plan:
+        for i, step in enumerate(execution_plan, 1):
+            plan_text += f"步骤{i}: {step.get('description')}\n"
+
+    # assemble step results text
+    results_text = ""
+    if step_results:
+        for i, result in enumerate(step_results, 1):
+            results_text += f"步骤{i}:{result.get('execution_result')}\n"
+
+
+    # Generate summary response
     messages = [HumanMessage(content=summary_response_prompt.format(
       user_task=state.get("user_task", ""),
       task_analysis=task_analysis,
-      execution_plan=execution_plan,
-      step_results=step_results
+      execution_plan=plan_text,
+      step_results=results_text
     ))]  # type: ignore
 
-    summary = self.reason_llm.invoke(messages)
+    try:
+      logger.info("Start generating summary response...")
+      summary = self.reason_llm.invoke(messages)
+    except Exception as e:
+      logger.error(f"Error in _summary_response: {e}")
+      state["status"] = "failed"
+      state["error"] = str(e)
+      return state
+    
+    # Update state with summary response
     state["timing_info"].update(self.statistic_timing(start_time, "response_generation"))
     state["status"] = "completed"
 
@@ -140,11 +247,14 @@ class PlanExecutionGraph(BaseGraph):
         state["timing_info"].get("response_generation_duration", 0)
     )
 
+    # Add final streaming chunk with summary
     state["streaming_chunks"].append({
         "step": "completed",
         "message": f"🎉 任务完成！总耗时: {total_duration:.2f}秒", # type: ignore
         "data": {
             "response": summary.content, # type: ignore
+            "step": "summary_response",
+            "message": f"🎉 任务完成！总耗时: {total_duration:.2f}秒",
             "timing_info": state["timing_info"],
             "total_nodes": len(state.get("execution_plan", [])),
             "completed_nodes": len(state.get("step_results", [])),
@@ -152,6 +262,7 @@ class PlanExecutionGraph(BaseGraph):
             "execution_plan": state.get("execution_plan", [])
         }
     })
+    logger.info(f"End generating summary response...")
     return state
   
   def _jump_condictional(self, state: PlanExecutorState) -> str: # type: ignore
@@ -179,47 +290,44 @@ class PlanExecutionGraph(BaseGraph):
             tools_list.append(f"- {t.__name__ if hasattr(t, '__name__') else str(t)}")
     return tools_list
 
-  def _extract_execution_result(self, result: Any, node_description: str = ""): # type: ignore
+  def _extract_execution_result(self, result: Any, node_description: str = "") -> str:
       """提取执行结果 - 公共方法"""
-      execution_result = ""
+      execution_result = "No result returned."
+      if not result: return execution_result
       try:
-          if result and isinstance(result, dict):
-              if "messages" in result:
-                  messages = result["messages"] # type: ignore
-                  if messages: 
-                      # 查找最后一个AI消息
-                      for msg in reversed(messages): # type: ignore
-                          if hasattr(msg, 'content'): # type: ignore
-                              msg_type = str(type(msg)).lower() # type: ignore
-                              if 'ai' in msg_type or 'assistant' in msg_type:
-                                  execution_result = msg.content # type: ignore 
-                                  break
-                      else:
-                          # 如果没有找到AI消息，使用最后一个消息
-                          last_message = messages[-1] # type: ignore
-                          if hasattr(last_message, 'content'): # type: ignore
-                              execution_result = last_message.content # type: ignore  
-                          else:
-                              execution_result = str(last_message) # type: ignore
-              elif "output" in result:
-                  execution_result = str(result["output"]) # type: ignore
-              else:
-                  execution_result = str(result) # type: ignore
-          elif result and hasattr(result, 'content'):
-              # 如果result直接是消息对象（直接LLM调用）
-              execution_result = result.content
-          elif result:
-              # 其他情况，转换为字符串
-              execution_result = str(result)
-          
-          # 如果结果太短或包含错误信息，提供更详细的信息
-          if len(execution_result) < 10 or "sorry" in execution_result.lower(): # type: ignore
-              execution_result = f"任务描述: {node_description}\n执行状态: 已完成\n结果: {execution_result}"
-              
+        # if result is str will try to convert json object
+        if isinstance(result, str):
+            try:
+              _result = json_match(result)  # type: ignore
+              if _result:
+                  result = _result
+            except Exception:
+              pass
+        
+        # process different result formats
+        if isinstance(result, dict) and result.get("messages"): # type: ignore
+            messages = result.get("messages", []) # type: ignore
+            if messages and isinstance(messages, list):
+              # get the last assistant message content
+              for message in reversed(messages): # type: ignore
+                  if isinstance(message, AIMessage):
+                    if hasattr(message, "content") and message.content: # type: ignore
+                        execution_result = message.content # type: ignore
+                        break
+                    else:
+                        last_message = messages[-1] # type: ignore
+                        if hasattr(last_message, 'content'): # type: ignore
+                            execution_result = last_message.content # type: ignore
+                        else:
+                            execution_result = str(last_message) # type: ignore
+        elif isinstance(result, dict) and result.get("output"): # type: ignore
+            execution_result = result.get("output") # type: ignore
+        else:
+          execution_result = str(result) # type: ignore
       except Exception as e:
-          self.logger.error(f"提取执行结果时出错: {str(e)}") # type: ignore
-          execution_result = f"执行完成，但结果提取时出现错误: {str(e)}"
-      
+        logger.error(f"Error extracting execution result for node '{node_description}': {e}")
+        traceback.print_exc()
+        execution_result = str(result) # type: ignore
       return execution_result   # type: ignore
   
 
@@ -235,39 +343,54 @@ class PlanExecutionGraph(BaseGraph):
     
     start_time = time.time()
 
-    all_tools = self.local_tools + self.mcp_tools
-    agent = create_react_agent( # type: ignore
-      model=self.simple_llm,
-      tools=all_tools
-    ) 
+    try:
+      # Combine all tools
+      all_tools = self.local_tools + self.mcp_tools
 
-    all_tools_formatted = self._format_tools_list(all_tools)
+      # Create React agent
+      agent = create_react_agent( # type: ignore
+        model=self.simple_llm,
+        tools=all_tools
+      ) 
 
-    react_prompt_filled = react_prompt.format(
-      description=step.get("description", ""),
-      user_feedback="",
-      expected_result=step.get("expected_result", ""),
-      tools="\n".join(all_tools_formatted),
-    )
-    logger.debug(f"React prompt for step {current_step + 1}:\n{react_prompt_filled}")
+      all_tools_formatted = self._format_tools_list(all_tools)
 
-    messages = {"messages": [{"role": "user", "content": react_prompt_filled}]}
-    if hasattr(agent, 'ainvoke'): # type: ignore
-        new_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(new_loop)
-        result = new_loop.run_until_complete(agent.ainvoke(messages)) # type: ignore
-    else:
-        result = agent.invoke(messages) # type: ignore
-    result = self._extract_execution_result(result) # type: ignore
-    timing_info = self.statistic_timing(start_time, f"execute_step_{current_step + 1}")
-    logger.debug(f"Step {current_step + 1} execution result: {result}")
-        
-    return {
-        "step": current_step + 1,
-        "execution_result": result,
-        "status": "completed",
-        "timing": timing_info
-    }
+      # Prepare React prompt
+      react_prompt_filled = react_prompt.format(
+        description=step.get("description", ""),
+        user_feedback="",
+        expected_result=step.get("expected_result", ""),
+        tools="\n".join(all_tools_formatted),
+      )
+      logger.debug(f"React prompt for step {current_step + 1}")
+
+      # Execute with agent
+      messages = {"messages": [{"role": "user", "content": react_prompt_filled}]}
+      if hasattr(agent, 'ainvoke'): # type: ignore
+          new_loop = asyncio.new_event_loop()
+          asyncio.set_event_loop(new_loop)
+          result = new_loop.run_until_complete(agent.ainvoke(messages)) # type: ignore
+      else:
+          result = agent.invoke(messages) # type: ignore
+      result = self._extract_execution_result(result) # type: ignore
+      timing_info = self.statistic_timing(start_time, f"execute_step_{current_step + 1}")
+      logger.debug(f"Step {current_step + 1} execution result: {result}")
+      
+      return {
+          "step": current_step + 1,
+          "execution_result": result,
+          "status": "completed",
+          "timing": timing_info
+      }
+    except Exception as e:
+      logger.error(f"Error executing step {current_step + 1}: {e}")
+      timing_info = self.statistic_timing(start_time, f"execute_step_{current_step + 1}")
+      return {
+          "step": current_step + 1,
+          "execution_result": str(e),
+          "status": "failed",
+          "timing": timing_info
+      }
 
 
   # Call to execute the graph
@@ -289,63 +412,95 @@ class PlanExecutionGraph(BaseGraph):
       step_results=[],
     )
     async for event in self.graph.astream_events(init_data):  # type: ignore
-        # logger.debug(f"Graph event: {event}")
+        # Event types to handle:
+          # 'on_chain_start'
+          # 'on_tool_end' 
+          # 'on_chat_model_start'
+          # 'on_chat_model_end'
+          # 'on_chain_end'
+          # 'on_tool_start'
+          # 'on_chat_model_stream'
+          # 'on_chain_stream'
+
+        ## on_chat_model event is not necessary to handle, as the Autonomy plan focuses on tool and chain execution.
+        ## Model-related events are intermediate processing steps.
+
         if event["event"] == "on_chain_stream":
             chunk = event.get("data", {}).get("chunk", {})
             if isinstance(chunk, dict) and "streaming_chunks" in chunk:
                 for streaming_chunk in chunk["streaming_chunks"]: # type: ignore
-                    yield { 
-                        "step": streaming_chunk.get("step"), # type: ignore
-                        "message": streaming_chunk.get("message"), # type: ignore
-                        "data": streaming_chunk.get("data"), # type: ignore   
-                        "node": event.get("name", "unknown")
+                    yield {
+                        "data": { 
+                          "step": streaming_chunk.get("step"), # type: ignore
+                          "message": streaming_chunk.get("message"), # type: ignore
+                          "data": streaming_chunk.get("data"), # type: ignore   
+                          "node": event.get("name", "unknown")
+                      },
+                      "event": "on_chain_stream"
                     }
+                    
             if isinstance(chunk, dict) and "__interrupt__" in chunk:
                 chunk_interrupt = chunk["__interrupt__"][0] # type: ignore
                 yield {
-                    "step": "interrupt",
-                    "message": "需要用户确认",
-                    "data": chunk_interrupt.value, # type: ignore
-                    "node": "check_node_uncertainty"
+                    "data": {
+                      "step": "interrupt",
+                      "message": "需要用户确认",
+                      "data": chunk_interrupt.value, # type: ignore
+                      "node": "check_node_uncertainty"
+                  },
+                  "event": "on_chain_stream"
                 }
                 return
         elif event["event"] == "on_chain_start":
             # Agent start run
             yield {
-                "step": "agent_start",
-                "message": f"🚀 开始执行 {event.get('name', '智能体')}",
                 "data": {
-                    "agent": event.get("name", "unknown")
+                  "step": "agent_start",
+                  "message": f"🚀 开始执行 {event.get('name', '智能体')}",
+                  "data": {
+                      "agent": event.get("name", "unknown")
+                  },
+                  "node": event.get("name", "unknown")
                 },
-                "node": event.get("name", "unknown")
+                "event": "on_chain_start"
             }
         elif event["event"] == "on_chain_end":
             # Agent run end
             yield {
-                "step": "agent_complete",
-                "message": f"✅ {event.get('name', '智能体')} 执行完成",
-                "data": {
-                    "agent": event.get("name", "unknown")
+                "data":{
+                  "step": "agent_complete",
+                  "message": f"✅ {event.get('name', '智能体')} 执行完成",
+                  "data": {
+                      "agent": event.get("name", "unknown")
+                  },
+                  "node": event.get("name", "unknown")
                 },
-                "node": event.get("name", "unknown")
-            }
+                "event": "on_chain_end"
+              }
         elif event["event"] == "on_tool_start":
             # Tool start run
             yield {
-                "step": "tool_start",
-                "message": f"🔧 使用工具: {event.get('name', 'unknown')}",
-                "data": {
-                    "tool": event.get("name", "unknown")
+                "data":{
+                  "step": "tool_start",
+                  "message": f"🔧 使用工具: {event.get('name', 'unknown')}",
+                  "data": {
+                      "tool": event.get("name", "unknown")
+                  },
+                  "node": "tool_execution"
                 },
-                "node": "tool_execution"
-            }
+                "event": "on_tool_start"
+              }
         elif event["event"] == "on_tool_end":
             # Tool run end
             yield {
-                "step": "tool_complete",
-                "message": f"✅ 工具 {event.get('name', 'unknown')} 执行完成",
                 "data": {
-                    "tool": event.get("name", "unknown")
+                  "step": "tool_complete",
+                  "message": f"✅ 工具 {event.get('name', 'unknown')} 执行完成",
+                  "data": {
+                      "tool": event.get("name", "unknown")
+                  },
+                  "node": "tool_execution"
                 },
-                "node": "tool_execution"
-            }
+                "event": "on_tool_end"
+              }
+

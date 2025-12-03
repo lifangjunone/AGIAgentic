@@ -139,7 +139,7 @@ We welcome contributions from the community! Whether it's bug fixes, feature add
 4. Push to the branch (git push origin feature/AmazingFeature)
 5. Open a Pull Request
 
-### Cite Us
+## Cite Us
 
 ```
 @misc{ragas2024,
@@ -149,3 +149,7 @@ We welcome contributions from the community! Whether it's bug fixes, feature add
   howpublished = {\url{https://github.com}},
 }
 ```
+
+## Technical documentation
+
++Jump to the streaming events reference: [astream_events — API Reference](./docs/astream_events.md)
