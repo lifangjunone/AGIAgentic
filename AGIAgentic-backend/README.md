@@ -105,9 +105,14 @@ python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 6. Test the streaming plan API (example)
 
 ```bash
-curl -N -X POST "http://127.0.0.1:8000/plan_executor/stream" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id":"testuser","user_task":"Query Li Bai birth year"}'
+curl -X 'POST' \
+  'http://127.0.0.1:8000/api/v1/plan_executor/stream' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "user_task": "昨天北京到天津的车票都有哪些时间的",
+  "user_id": "001"
+}'
 ```
 
 The endpoint returns Server-Sent Events (SSE). Parse each "data:" line as JSON.
