@@ -34,8 +34,10 @@
 ### Video
 
 <h1 align="center">
-  <img style="vertical-align:middle" height="600"
-  src="https://github.com/lifangjunone/AGIAgentic/blob/main/AGIAgentic-backend/docs/_static/video/demo_video.mp4">
+  <video width="800" controls>
+    <source src="https://github.com/lifangjunone/AGIAgentic/raw/main/AGIAgentic-backend/docs/_static/video/demo_video.mp4" type="video/mp4">
+    您的浏览器不支持视频标签。
+  </video>
 </h1>
 
 ### Images
