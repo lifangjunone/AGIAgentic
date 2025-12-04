@@ -30,27 +30,39 @@
           >
             🗑️ 清空日志
           </button>
+          <!-- <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" v-model="showAllLogs" />
+            <span>显示所有日志（调试）</span>
+          </label> -->
         </div>
       </div>
     </div>
 
     <div class="content">
       <!-- 执行状态概览 -->
-      <div class="status-overview" v-if="executionStatus">
+      <div class="status-overview" v-if="executionStatus || logs.length > 0">
         <div class="status-card">
           <div class="status-item">
             <span class="label">状态:</span>
-            <span :class="['status-badge', executionStatus.status]">
-              {{ executionStatus.statusText }}
+            <span :class="['status-badge', executionStatus?.status || 'unknown']">
+              {{ executionStatus?.statusText || '等待中' }}
             </span>
           </div>
-          <div class="status-item" v-if="executionStatus.totalTime">
+          <div class="status-item" v-if="executionStatus?.totalTime">
             <span class="label">总耗时:</span>
             <span class="value">{{ executionStatus.totalTime }}秒</span>
           </div>
-          <div class="status-item" v-if="executionStatus.completedSteps">
+          <div class="status-item" v-if="executionStatus?.completedSteps">
             <span class="label">完成步骤:</span>
             <span class="value">{{ executionStatus.completedSteps }}/{{ executionStatus.totalSteps }}</span>
+          </div>
+          <div class="status-item">
+            <span class="label">日志总数:</span>
+            <span class="value">{{ logs.length }}</span>
+          </div>
+          <div class="status-item">
+            <span class="label">显示日志:</span>
+            <span class="value">{{ filteredLogs.length }}</span>
           </div>
         </div>
       </div>
@@ -75,9 +87,17 @@
           </div>
         </div>
         <div class="logs" ref="logsContainer">
+          <!-- 调试信息 -->
+          <div v-if="logs.length > 0" style="background: #f0f0f0; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-size: 12px;">
+            <strong>调试信息:</strong><br>
+            总日志数: {{ logs.length }} | 
+            过滤后日志数: {{ filteredLogs.length }} | 
+            启用过滤器: {{ logFilters.filter(f => f.enabled).map(f => f.type).join(', ') }}
+          </div>
+          
           <div
             v-for="(log, index) in filteredLogs"
-            :key="index"
+            :key="`log-${index}-${log.eventType}-${log.timestamp}-${Date.now()}`"
             :class="['log-item', `log-${log.eventType}`]"
           >
             <div class="log-header">
@@ -89,25 +109,28 @@
               <div class="log-message" v-if="log.message">
                 {{ log.message }}
               </div>
-              <div class="log-data" v-if="log.data">
+              <div class="log-data" v-if="log.data && Object.keys(log.data).length > 0">
                 <div class="data-section" v-if="log.data.step || log.step">
                   <strong>步骤:</strong> {{ log.data.step || log.step }}
                 </div>
                 <div class="data-section" v-if="log.data.node || log.node">
                   <strong>节点:</strong> {{ log.data.node || log.node }}
                 </div>
-                <div class="data-section" v-if="log.data.agent">
-                  <strong>代理:</strong> {{ log.data.agent }}
+                <div class="data-section" v-if="log.data.agent || (log.data.data && log.data.data.agent)">
+                  <strong>代理:</strong> {{ log.data.agent || (log.data.data && log.data.data.agent) }}
                 </div>
-                <div class="data-section" v-if="log.data.tool">
-                  <strong>工具:</strong> {{ log.data.tool }}
+                <div class="data-section" v-if="log.data.tool || (log.data.data && log.data.data.tool)">
+                  <strong>工具:</strong> {{ log.data.tool || (log.data.data && log.data.data.tool) }}
+                </div>
+                <div class="data-section" v-if="log.data.message && log.data.message !== log.message">
+                  <strong>消息:</strong> {{ log.data.message }}
                 </div>
                 <div
                   class="data-section execution-result"
-                  v-if="log.data.execution_result"
+                  v-if="log.data.execution_result || (log.data.data && log.data.data.execution_result)"
                 >
                   <strong>执行结果:</strong>
-                  <div class="result-content" v-html="formatResult(log.data.execution_result)"></div>
+                  <div class="result-content" v-html="formatResult(log.data.execution_result || (log.data.data && log.data.data.execution_result))"></div>
                 </div>
                 <div
                   class="data-section"
@@ -130,19 +153,19 @@
                 </div>
                 <div
                   class="data-section"
-                  v-if="log.data.task_analysis"
+                  v-if="log.data.task_analysis || (log.data.data && log.data.data.task_analysis)"
                 >
                   <strong>任务分析:</strong>
-                  <div class="result-content">{{ log.data.task_analysis }}</div>
+                  <div class="result-content">{{ log.data.task_analysis || (log.data.data && log.data.data.task_analysis) }}</div>
                 </div>
                 <div
                   class="data-section"
-                  v-if="log.data.execution_plans"
+                  v-if="log.data.execution_plans || (log.data.data && log.data.data.execution_plans)"
                 >
                   <strong>执行计划:</strong>
                   <div class="plans-list">
                     <div
-                      v-for="(plan, idx) in log.data.execution_plans"
+                      v-for="(plan, idx) in (log.data.execution_plans || (log.data.data && log.data.data.execution_plans) || [])"
                       :key="idx"
                       class="plan-item"
                     >
@@ -169,13 +192,20 @@
                 <!-- 调试信息：显示原始数据 -->
                 <details class="data-section debug-info" v-if="log.rawData">
                   <summary style="cursor: pointer; color: #999; font-size: 12px;">🔍 调试信息（展开查看原始数据）</summary>
-                  <pre style="background: #f5f5f5; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 11px; margin-top: 8px; white-space: pre-wrap;">{{ JSON.stringify(log.rawData, null, 2) }}</pre>
+                  <pre style="background: #f5f5f5; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 11px; margin-top: 8px; white-space: pre-wrap;">{{ typeof log.rawData === 'string' ? log.rawData : JSON.stringify(log.rawData, null, 2) }}</pre>
                 </details>
               </div>
             </div>
           </div>
           <div v-if="filteredLogs.length === 0 && logs.length > 0" class="empty-logs">
-            日志已过滤，请检查过滤器设置（当前日志总数: {{ logs.length }}）
+            <div style="color: #ff9800; margin-bottom: 10px;">
+              ⚠️ 日志已过滤，请检查过滤器设置
+            </div>
+            <div style="font-size: 12px; color: #666;">
+              当前日志总数: {{ logs.length }}<br>
+              已启用过滤器: {{ logFilters.filter(f => f.enabled).map(f => f.label).join(', ') }}<br>
+              日志类型分布: {{ Object.entries(logs.reduce((acc, log) => { acc[log.eventType] = (acc[log.eventType] || 0) + 1; return acc; }, {})).map(([type, count]) => `${type}: ${count}`).join(', ') }}
+            </div>
           </div>
           <div v-if="logs.length === 0 && !isExecuting" class="empty-logs">
             暂无日志数据
@@ -190,7 +220,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, watch } from 'vue'
 
 const userTask = ref('调用工具帮我算下命，出生时间2011年10月19日8点，不需要让我确认信息')
 const userId = ref('0002')
@@ -204,24 +234,52 @@ const logFilters = ref([
   { type: 'on_chain_end', label: '链结束', enabled: true },
   { type: 'on_tool_start', label: '工具开始', enabled: true },
   { type: 'on_tool_end', label: '工具结束', enabled: true },
-  { type: 'ping', label: '心跳', enabled: false }
+  { type: 'ping', label: '心跳', enabled: false },
+  { type: 'error', label: '错误', enabled: true },
+  { type: 'unknown', label: '未知', enabled: true }
 ])
 
 const executionStatus = ref(null)
+const showAllLogs = ref(false) // 调试模式：显示所有日志
 
 const filteredLogs = computed(() => {
+  // 如果启用"显示所有日志"，直接返回所有日志
+  if (showAllLogs.value) {
+    console.log('🔓 调试模式：显示所有日志，总数:', logs.value.length)
+    return logs.value
+  }
+  
   const enabledTypes = logFilters.value
     .filter(f => f.enabled)
     .map(f => f.type)
-  const filtered = logs.value.filter(log => enabledTypes.includes(log.eventType))
-  console.log('过滤日志:', { 
+  const filtered = logs.value.filter(log => {
+    const matches = enabledTypes.includes(log.eventType)
+    if (!matches) {
+      console.log('❌ 日志被过滤:', { eventType: log.eventType, enabledTypes, log })
+    }
+    return matches
+  })
+  console.log('📊 过滤日志计算:', { 
     total: logs.value.length, 
     filtered: filtered.length, 
     enabledTypes,
-    logTypes: logs.value.map(l => l.eventType)
+    logTypes: logs.value.map(l => l.eventType),
+    filteredLogTypes: filtered.map(l => l.eventType)
   })
   return filtered
 })
+
+// 监听logs变化，强制触发更新
+watch(() => logs.value.length, (newLength, oldLength) => {
+  console.log('🔄 logs数组长度变化:', { oldLength, newLength })
+  if (newLength > oldLength) {
+    console.log('✅ 新日志已添加，当前总数:', newLength)
+    console.log('📋 最新日志:', logs.value[logs.value.length - 1])
+    nextTick(() => {
+      console.log('🔍 nextTick后过滤日志数:', filteredLogs.value.length)
+    })
+  }
+}, { immediate: true })
 
 const getEventIcon = (eventType) => {
   const icons = {
@@ -313,108 +371,349 @@ const startExecution = async () => {
     const decoder = new TextDecoder()
     let buffer = ''
     let currentEvent = null
+    let chunkCount = 0
+    let totalBytesReceived = 0
+
+    console.log('🚀 开始读取流式数据...')
 
     while (true) {
       const { done, value } = await reader.read()
-      if (done) break
+      if (done) {
+        console.log('✅ 流式数据读取完成，总共收到', chunkCount, '个数据块，', totalBytesReceived, '字节')
+        break
+      }
 
-      buffer += decoder.decode(value, { stream: true })
+      chunkCount++
+      totalBytesReceived += value.length
+      const decoded = decoder.decode(value, { stream: true })
+      buffer += decoded
       
-      // SSE格式：event: xxx\n\ndata: xxx\n\n
-      const chunks = buffer.split('\n\n')
-      buffer = chunks.pop() || ''
+      console.log(`📦 收到数据块 #${chunkCount}, 大小: ${value.length} 字节, 累计: ${totalBytesReceived} 字节, buffer长度: ${buffer.length}`)
+      
+      // 定义处理SSE数据的函数（在使用之前定义）
+      const processSSEData = (dataStr, eventType) => {
+        if (!dataStr) return
 
-      for (const chunk of chunks) {
-        if (!chunk.trim()) continue
-        
-        const lines = chunk.split('\n')
-        let eventType = null
-        let dataStr = null
+        console.log('📨 处理SSE数据:', { 
+          eventType, 
+          hasDataStr: !!dataStr,
+          dataStrLength: dataStr ? dataStr.length : 0,
+          preview: dataStr ? dataStr.substring(0, 100) : null
+        })
 
-        for (const line of lines) {
-          const trimmed = line.trim()
-          if (trimmed.startsWith('event:')) {
-            eventType = trimmed.replace('event:', '').trim()
-          } else if (trimmed.startsWith('data:')) {
-            dataStr = trimmed.replace('data:', '').trim()
-          } else if (trimmed.startsWith(':')) {
-            // 注释行，忽略
-            continue
+        // 处理ping心跳消息
+        if (dataStr && (dataStr.startsWith('ping') || dataStr.startsWith(': ping'))) {
+          // ping消息单独处理，不添加到日志
+          if (eventType === 'ping' || !eventType) {
+            console.log('💓 收到ping心跳，跳过')
+            return
           }
         }
-
-        if (dataStr && !dataStr.startsWith('ping') && !dataStr.startsWith(': ping')) {
-          console.log('收到数据:', { eventType, dataStr: dataStr.substring(0, 150) })
+        
+        if (dataStr) {
+          console.log('📥 收到原始数据:', { 
+            eventType, 
+            eventTypeType: typeof eventType,
+            eventTypeValue: eventType,
+            dataStrLength: dataStr.length, 
+            preview: dataStr.substring(0, 200),
+            fullDataStr: dataStr // 临时输出完整数据用于调试
+          })
+          
+          // 临时：输出完整数据到控制台，方便调试
+          if (dataStr.length < 1000) {
+            console.log('📋 完整数据字符串:', dataStr)
+          }
+          
           try {
             let data
             
-            // 方法1: 尝试使用Function构造器直接解析Python字典（最可靠）
+            // 改进的Python字典到JSON转换函数
+            // 注意：实际数据中字符串值可能使用双引号，只有键使用单引号
+            const pythonDictToJson = (pythonStr) => {
+              let jsonStr = pythonStr.trim()
+              
+              // 1. 先处理Python关键字（必须在替换引号之前）
+              jsonStr = jsonStr.replace(/:\s*True\b/g, ': true')
+              jsonStr = jsonStr.replace(/:\s*False\b/g, ': false')
+              jsonStr = jsonStr.replace(/:\s*None\b/g, ': null')
+              
+              // 2. 先保护双引号字符串（临时替换为占位符）
+              const stringPlaceholders = []
+              let placeholderIndex = 0
+              
+              // 匹配双引号字符串（包括转义的双引号）
+              jsonStr = jsonStr.replace(/"(?:[^"\\]|\\.)*"/g, (match) => {
+                const placeholder = `__STRING_PLACEHOLDER_${placeholderIndex}__`
+                stringPlaceholders.push(match)
+                placeholderIndex++
+                return placeholder
+              })
+              
+              // 3. 处理字典键：'key': -> "key":
+              jsonStr = jsonStr.replace(/'([^']*)':\s*/g, '"$1": ')
+              
+              // 4. 处理单引号字符串值：: 'value' -> : "value"
+              jsonStr = jsonStr.replace(/:\s*'([^']*)'(?=\s*[,}\]])/g, ': "$1"')
+              
+              // 5. 处理数组中的单引号字符串值
+              jsonStr = jsonStr.replace(/\[\s*'([^']*)'\s*\]/g, '["$1"]')
+              jsonStr = jsonStr.replace(/,\s*'([^']*)'\s*(?=[,\]])/g, ', "$1"')
+              
+              // 6. 处理剩余的单引号（嵌套字典的键等）
+              jsonStr = jsonStr.replace(/'/g, '"')
+              
+              // 7. 恢复双引号字符串
+              stringPlaceholders.forEach((original, index) => {
+                jsonStr = jsonStr.replace(`__STRING_PLACEHOLDER_${index}__`, original)
+              })
+              
+              return jsonStr
+            }
+            
+            // 安全地解析Python字典格式：只使用JSON.parse，不执行任意代码
             try {
-              // 先处理Python关键字，避免被当作变量名
-              let processedStr = dataStr
-                .replace(/:\s*True\b/g, ': true')
-                .replace(/:\s*False\b/g, ': false')
-                .replace(/:\s*None\b/g, ': null')
-                .replace(/'/g, '"') // 将单引号替换为双引号
+              let jsonStr = pythonDictToJson(dataStr)
               
-              // 使用Function构造器安全解析
-              const func = new Function('return ' + processedStr)
-              data = func()
+              console.log('🔄 转换后的JSON字符串:', jsonStr.substring(0, 500))
               
-              // 验证结果
+              // 只使用JSON.parse，这是安全的，不会执行任意代码
+              data = JSON.parse(jsonStr)
+              
+              // 验证结果必须是对象
               if (typeof data !== 'object' || data === null) {
                 throw new Error('解析结果不是对象')
               }
               
-              console.log('Function解析成功:', data)
-            } catch (funcError) {
-              // 方法2: 尝试JSON解析（如果Function失败）
-              console.warn('Function解析失败，尝试JSON:', funcError.message)
+              console.log('✅ JSON解析成功:', data)
+            } catch (parseError) {
+              // 如果JSON解析失败，尝试更宽松的转换
+              console.warn('⚠️ JSON解析失败，尝试备用方法:', parseError.message)
               try {
-                let jsonStr = dataStr
-                  .replace(/:\s*True\b/g, ': true')
-                  .replace(/:\s*False\b/g, ': false')
-                  .replace(/:\s*None\b/g, ': null')
-                  .replace(/'/g, '"')
+                // 备用方法：使用相同的保护双引号字符串逻辑
+                let jsonStr = dataStr.trim()
+                
+                // 处理Python关键字
+                jsonStr = jsonStr.replace(/:\s*True\b/g, ': true')
+                jsonStr = jsonStr.replace(/:\s*False\b/g, ': false')
+                jsonStr = jsonStr.replace(/:\s*None\b/g, ': null')
+                
+                // 保护双引号字符串
+                const stringPlaceholders = []
+                let placeholderIndex = 0
+                jsonStr = jsonStr.replace(/"(?:[^"\\]|\\.)*"/g, (match) => {
+                  const placeholder = `__STRING_PLACEHOLDER_${placeholderIndex}__`
+                  stringPlaceholders.push(match)
+                  placeholderIndex++
+                  return placeholder
+                })
+                
+                // 处理字典键
+                jsonStr = jsonStr.replace(/'([^']*)':\s*/g, '"$1": ')
+                
+                // 处理剩余的单引号
+                jsonStr = jsonStr.replace(/'/g, '"')
+                
+                // 恢复双引号字符串
+                stringPlaceholders.forEach((original, index) => {
+                  jsonStr = jsonStr.replace(`__STRING_PLACEHOLDER_${index}__`, original)
+                })
+                
+                console.log('🔄 备用方法转换后的JSON:', jsonStr.substring(0, 500))
                 
                 data = JSON.parse(jsonStr)
-                console.log('JSON解析成功:', data)
-              } catch (jsonError) {
-                throw new Error(`Function和JSON解析都失败: ${funcError.message}, ${jsonError.message}`)
+                
+                if (typeof data !== 'object' || data === null) {
+                  throw new Error('备用方法解析结果不是对象')
+                }
+                
+                console.log('✅ 备用方法解析成功:', data)
+              } catch (backupError) {
+                console.error('❌ 所有解析方法都失败')
+                console.error('原始数据长度:', dataStr.length)
+                console.error('原始数据前500字符:', dataStr.substring(0, 500))
+                console.error('主方法错误:', parseError.message)
+                console.error('备用方法错误:', backupError.message)
+                throw new Error(`数据解析失败: ${parseError.message}`)
               }
             }
             
             // 成功解析后处理数据
-            handleStreamData(data, eventType)
+            console.log('🚀 准备处理数据:', { 
+              eventType, 
+              eventTypeType: typeof eventType,
+              eventTypeValue: eventType,
+              dataKeys: Object.keys(data), 
+              step: data.step, 
+              message: data.message,
+              hasData: !!data.data,
+              dataDataKeys: data.data ? Object.keys(data.data) : [],
+              fullData: data
+            })
+            
+            // 确保eventType存在且有效
+            if (!eventType || typeof eventType !== 'string' || !eventType.trim()) {
+              console.warn('⚠️ eventType无效:', eventType, '使用默认值on_chain_stream')
+              eventType = 'on_chain_stream'
+            } else {
+              eventType = eventType.trim()
+              console.log('✅ eventType有效:', eventType)
+            }
+            
+            console.log('🎯 调用handleStreamData，参数:', { data, eventType })
+            // 保存原始字符串到data对象中，以便在handleStreamData中使用
+            data._rawString = dataStr
+            handleStreamData(data, eventType, dataStr)
           } catch (e) {
-            console.error('解析失败:', e.message)
+            console.error('❌ 解析失败:', e)
+            console.error('错误详情:', {
+              message: e.message,
+              stack: e.stack,
+              name: e.name
+            })
             console.error('原始数据:', dataStr)
+            console.error('原始数据长度:', dataStr.length)
+            console.error('eventType:', eventType)
+            
             // 即使解析失败，也添加日志条目显示原始数据
-            const fallbackEventType = eventType || getEventTypeFromStep('unknown')
-            logs.value.push({
+            const fallbackEventType = eventType ? String(eventType) : 'on_chain_stream'
+            const errorLog = {
               eventType: fallbackEventType,
               message: '数据解析失败: ' + e.message,
               timestamp: new Date().toLocaleTimeString(),
               data: { 
-                raw: dataStr, 
+                raw: dataStr.substring(0, 500), // 只保存前500字符
                 error: e.message,
+                errorStack: e.stack,
                 eventType: eventType
               },
-              rawData: { raw: dataStr }
-            })
+              rawData: dataStr.substring(0, 1000) // 保存更多原始数据
+            }
+            logs.value.push(errorLog)
+            logs.value = [...logs.value] // 强制更新
+            console.log('⚠️ 错误日志已添加:', errorLog)
+            console.log('📊 当前日志总数:', logs.value.length)
             scrollToBottom()
+          }
+        }
+      }
+      
+      // SSE格式：event: xxx\n\ndata: xxx\n\n
+      // 检查buffer内容，看看实际格式（只在第一次或buffer较大时检查）
+      if ((chunkCount === 1 || chunkCount % 10 === 0) && buffer.length > 0) {
+        const preview = buffer.substring(0, Math.min(300, buffer.length))
+        console.log(`🔍 buffer内容预览 (长度: ${buffer.length}):`, preview.replace(/\n/g, '\\n').replace(/\r/g, '\\r'))
+        console.log(`🔍 buffer包含\\n\\n:`, buffer.includes('\n\n'))
+        console.log(`🔍 buffer包含\\r\\n\\r\\n:`, buffer.includes('\r\n\r\n'))
+        console.log(`🔍 buffer包含单个\\n:`, buffer.includes('\n'))
+        console.log(`🔍 buffer包含单个\\r:`, buffer.includes('\r'))
+      }
+      
+      // 尝试多种分隔符
+      let chunks = []
+      let usedSeparator = ''
+      
+      // 先尝试标准的 \n\n
+      if (buffer.includes('\n\n')) {
+        chunks = buffer.split('\n\n')
+        usedSeparator = '\\n\\n'
+      } 
+      // 再尝试 \r\n\r\n
+      else if (buffer.includes('\r\n\r\n')) {
+        chunks = buffer.split('\r\n\r\n')
+        usedSeparator = '\\r\\n\\r\\n'
+      }
+      // 再尝试 \r\r
+      else if (buffer.includes('\r\r')) {
+        chunks = buffer.split('\r\r')
+        usedSeparator = '\\r\\r'
+      }
+      // 如果都没有，但buffer很大，可能是数据还没完整，先不处理
+      else {
+        if (buffer.length > 5000) {
+          console.warn(`⚠️ buffer很大 (${buffer.length}) 但没有找到分隔符，可能数据格式不对`)
+          // 尝试查找 "event:" 和 "data:" 模式
+          const eventMatches = buffer.match(/event:\s*([^\n\r]+)/g)
+          const dataMatches = buffer.match(/data:\s*([^\n\r]+)/g)
+          if (eventMatches || dataMatches) {
+            console.log('🔍 找到event/data模式，但分隔符可能不对')
+            console.log('event匹配:', eventMatches?.slice(0, 3))
+            console.log('data匹配:', dataMatches?.slice(0, 3))
+          }
+        }
+        // 继续等待更多数据
+        continue
+      }
+      
+      buffer = chunks.pop() || ''
+      
+      if (chunks.length > 0) {
+        console.log(`✅ 使用 ${usedSeparator} 分隔符解析到 ${chunks.length} 个完整块，剩余buffer长度: ${buffer.length}`)
+        
+        // 处理每个完整块
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i]
+          if (!chunk.trim()) {
+            console.log(`⏭️ 跳过空块 #${i + 1}`)
+            continue
+          }
+          
+          console.log(`🔍 处理块 #${i + 1}, 长度: ${chunk.length}, 内容预览: ${chunk.substring(0, 100)}`)
+          
+          const lines = chunk.split(/\r?\n/)
+          let eventType = null
+          let dataLines = []
+
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (trimmed.startsWith('event:')) {
+              eventType = trimmed.replace('event:', '').trim()
+            } else if (trimmed.startsWith('data:')) {
+              // 收集所有data行（SSE格式支持多行data）
+              dataLines.push(trimmed.replace('data:', '').trim())
+            } else if (trimmed.startsWith(':')) {
+              // 注释行，忽略
+              continue
+            } else if (dataLines.length > 0 && trimmed) {
+              // 如果已经有data行，后续的非空行也作为data的一部分（多行data）
+              dataLines.push(trimmed)
+            }
+          }
+          
+          // 合并所有data行为一个字符串
+          const dataStr = dataLines.length > 0 ? dataLines.join(' ') : null
+          
+          // 调用处理函数
+          if (dataStr) {
+            processSSEData(dataStr, eventType)
           }
         }
       }
     }
   } catch (error) {
-    console.error('Execution error:', error)
-    logs.value.push({
+    console.error('❌ Execution error:', error)
+    console.error('错误详情:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+    
+    const errorLog = {
       eventType: 'error',
       message: `执行失败: ${error.message}`,
       timestamp: new Date().toLocaleTimeString(),
-      data: {}
-    })
+      data: {
+        error: error.message,
+        stack: error.stack,
+        name: error.name
+      },
+      rawData: { error: error.message }
+    }
+    
+    logs.value.push(errorLog)
+    logs.value = [...logs.value] // 强制更新
+    console.log('⚠️ 错误日志已添加:', errorLog)
+    console.log('📊 当前日志总数:', logs.value.length)
   } finally {
     isExecuting.value = false
     executionStatus.value = {
@@ -426,35 +725,138 @@ const startExecution = async () => {
   }
 }
 
-const handleStreamData = (data, eventTypeFromStream = null) => {
-  // 优先使用流中的event类型，否则从data.step推断
-  let eventType = eventTypeFromStream || data.step || 'unknown'
+const handleStreamData = (data, eventTypeFromStream = null, rawString = null) => {
+  console.log('🔍 handleStreamData 调用:', { 
+    data, 
+    eventTypeFromStream,
+    eventTypeFromStreamType: typeof eventTypeFromStream,
+    eventTypeFromStreamValue: eventTypeFromStream,
+    hasRawString: !!rawString,
+    rawStringLength: rawString ? rawString.length : 0
+  })
+  
+  // 优先使用流中的event类型（如果存在且有效）
+  let eventType = null
+  
+  if (eventTypeFromStream && typeof eventTypeFromStream === 'string' && eventTypeFromStream.trim()) {
+    // 如果流中有明确的event类型，优先使用
+    eventType = eventTypeFromStream.trim()
+    console.log('✅ 使用流中的eventType:', eventType)
+  } else {
+    console.log('⚠️ eventTypeFromStream无效，尝试推断:', { 
+      eventTypeFromStream, 
+      type: typeof eventTypeFromStream,
+      trimmed: eventTypeFromStream ? String(eventTypeFromStream).trim() : null
+    })
+    // 否则从data.step推断
+    const stepValue = data?.step || data?.data?.step || null
+    if (stepValue) {
+      eventType = getEventTypeFromStep(String(stepValue))
+      console.log('🔄 从step推断eventType:', { step: stepValue, eventType })
+    } else {
+      // 默认使用on_chain_stream
+      eventType = 'on_chain_stream'
+      console.log('⚠️ 无法推断eventType，使用默认值:', eventType)
+    }
+  }
   
   // 确保eventType有on_前缀，以匹配过滤器
-  if (eventType.startsWith('on_')) {
-    // 已经是on_开头，直接使用
-    eventType = eventType
-  } else {
-    // 从step推断，确保返回带on_前缀的类型
-    eventType = getEventTypeFromStep(eventType)
+  if (!eventType || typeof eventType !== 'string' || !eventType.startsWith('on_')) {
+    const inferredType = getEventTypeFromStep(eventType || 'unknown')
+    console.log('🔄 补充on_前缀:', { from: eventType, to: inferredType })
+    eventType = inferredType
   }
+  
+  // 最终验证eventType
+  if (!eventType || typeof eventType !== 'string') {
+    console.error('❌ eventType仍然无效，强制设置为on_chain_stream:', eventType)
+    eventType = 'on_chain_stream'
+  }
+  
+  console.log('✅ 最终确定的eventType:', eventType, '类型:', typeof eventType)
 
-  console.log('处理数据:', { eventType, eventTypeFromStream, step: data.step, message: data.message })
+  console.log('📋 最终eventType:', eventType, '数据:', { 
+    step: data?.step, 
+    message: data?.message,
+    hasData: !!data?.data,
+    dataKeys: data?.data ? Object.keys(data.data) : []
+  })
 
   // 合并data和data.data，确保所有字段都能访问到
   const logData = { ...data, ...(data.data || {}) }
   
+  console.log('📦 合并后的logData keys:', Object.keys(logData))
+  console.log('📦 logData内容预览:', {
+    step: logData.step,
+    message: logData.message,
+    hasExecutionResult: !!logData.execution_result,
+    hasTaskAnalysis: !!logData.task_analysis,
+    hasExecutionPlans: !!logData.execution_plans,
+    executionResultType: typeof logData.execution_result
+  })
+  
+  // 准备rawData，优先使用传入的rawString，否则使用完整的data对象
+  const rawDataToSave = rawString || data._rawString || data
+  
   const logEntry = {
-    eventType: eventType,
+    eventType: String(eventType), // 确保是字符串
     message: data.message || '',
     timestamp: new Date().toLocaleTimeString(),
     data: logData,
-    // 也保存原始数据用于调试
-    rawData: data
+    // 保存原始数据用于调试：优先保存原始字符串，否则保存完整data对象
+    rawData: rawDataToSave
   }
+  
+  // 清理临时字段
+  if (data._rawString) {
+    delete data._rawString
+  }
+  
+  console.log('📝 准备添加日志条目:', {
+    eventType: logEntry.eventType,
+    eventTypeType: typeof logEntry.eventType,
+    message: logEntry.message,
+    dataKeys: Object.keys(logEntry.data),
+    logEntry: logEntry
+  })
 
+  // 直接push到数组
+  const beforeLength = logs.value.length
   logs.value.push(logEntry)
-  console.log('日志已添加，当前日志数量:', logs.value.length)
+  
+  // 强制触发响应式更新 - 使用展开运算符创建新数组
+  logs.value = [...logs.value]
+  
+  console.log('✅ 日志已添加到数组:', {
+    beforeLength,
+    afterLength: logs.value.length,
+    eventType: logEntry.eventType,
+    message: logEntry.message,
+    dataKeys: Object.keys(logEntry.data),
+    totalLogs: logs.value.length
+  })
+  console.log('📊 当前日志总数:', logs.value.length, '最新日志eventType:', logEntry.eventType)
+  console.log('🔍 检查最新日志:', logs.value[logs.value.length - 1])
+  
+  // 在nextTick中检查过滤后的日志
+  nextTick(() => {
+    const enabledTypes = logFilters.value.filter(f => f.enabled).map(f => f.type)
+    const willBeShown = enabledTypes.includes(logEntry.eventType)
+    console.log('🔍 检查过滤器:', {
+      enabledTypes,
+      logEventType: logEntry.eventType,
+      willBeShown,
+      filteredLogsCount: filteredLogs.value.length,
+      allLogEventTypes: logs.value.map(l => l.eventType),
+      filteredLogEventTypes: filteredLogs.value.map(l => l.eventType)
+    })
+    
+    if (!willBeShown) {
+      console.warn('⚠️ 警告：日志不会被显示，因为eventType不在启用的过滤器中！')
+      console.warn('启用过滤器:', enabledTypes)
+      console.warn('日志eventType:', logEntry.eventType)
+    }
+  })
 
   // 更新执行状态
   if (data.step === 'completed' || (data.data && data.data.step === 'completed')) {
@@ -496,6 +898,7 @@ const clearLogs = () => {
   logs.value = []
   executionStatus.value = null
 }
+
 
 onMounted(() => {
   // 组件挂载后的初始化

@@ -12,4 +12,6 @@ wheels/
 logs/*
 AGIAgentic-backend/logs/*
 AGIAgentic-backend/envs/*
+AGIAgentic-frontend/node_nodules
+AGIAgentic-frontend/.vscode
 
