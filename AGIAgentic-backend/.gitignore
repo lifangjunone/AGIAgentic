@@ -11,4 +11,5 @@ wheels/
 .env
 logs/*
 envs/*
-
+docs/_static/.DS_Store
+docs/_static/video/.DS_Store

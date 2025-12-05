@@ -178,5 +178,5 @@ We welcome contributions from the community! Whether it's bug fixes, feature add
 
 ## Technical documentation
 
-+Jump to the streaming events reference: [astream_events — API Reference](./docs/astream_events.md)
++Jump to the streaming events reference: [astream_events — API Reference](./AGIAgentic-backend/docs/docs/astream_events.md)
 
